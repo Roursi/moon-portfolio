@@ -3,27 +3,27 @@ const portfolioData = {
     {
       title: "《求真》第一期",
       pdf: "./assets/journals/《求真》第一期.pdf",
-      cover: "./assets/posters/封面定稿.jpg"
+      cover: "./assets/journals/cover-qiuzhen-1.jpg"
     },
     {
       title: "《求真》第二期",
       pdf: "./assets/journals/《求真》第二期.pdf",
-      cover: "./assets/posters/廉洁文集封面.png"
+      cover: "./assets/journals/cover-qiuzhen-2.png"
     },
     {
       title: "《求真》第三期",
       pdf: "./assets/journals/《求真》第三期.pdf",
-      cover: "./assets/posters/国庆海报.png"
+      cover: "./assets/journals/cover-qiuzhen-3.png"
     },
     {
       title: "《求真》第四期",
       pdf: "./assets/journals/《求真》第四期.pdf",
-      cover: "./assets/posters/兔年迎春海报.jpg"
+      cover: "./assets/journals/cover-qiuzhen-4.jpg"
     },
     {
       title: "班刊集萃",
       pdf: "./assets/journals/班刊集萃.pdf",
-      cover: "./assets/posters/培训会议背景 海报.png"
+      cover: "./assets/journals/cover-banji-jicui.png"
     }
   ],
   poster: [
@@ -118,15 +118,20 @@ function createJournalCard(item) {
     <article class="journal-card">
       <button class="journal-btn" type="button" data-pdf="${pdfUrl}" data-title="${item.title}">
         <div class="journal-cover">
-          <span class="journal-cover-loading">封面加载中...</span>
-          <canvas class="journal-cover-canvas" data-pdf="${pdfUrl}" aria-label="${item.title} PDF 封面"></canvas>
-          <img class="journal-cover-fallback" src="${coverUrl}" alt="${item.title} 封面" />
+          <img class="journal-cover-image" src="${coverUrl}" alt="${item.title} 封面" />
         </div>
         <div class="journal-meta">
           <span>${item.title}</span>
-          <span class="journal-hint">新窗口打开</span>
+          <span class="journal-hint">点击展开在线预览</span>
         </div>
       </button>
+      <div class="journal-preview" aria-hidden="true">
+        <div class="journal-preview-head">
+          <strong>${item.title}</strong>
+          <button type="button" class="journal-preview-close" aria-label="关闭预览">关闭</button>
+        </div>
+        <div class="journal-preview-pages"></div>
+      </div>
     </article>
   `;
 }
@@ -143,55 +148,22 @@ function createStandardCard(item) {
 
 function bindJournalClicks(scope) {
   scope.querySelectorAll(".journal-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", async () => {
       const pdf = btn.dataset.pdf;
-      if (!pdf) return;
-      window.open(pdf, "_blank", "noopener,noreferrer");
+      const card = btn.closest(".journal-card");
+      if (!pdf || !card) return;
+      await toggleJournalPreview(card, pdf);
     });
   });
-}
 
-async function renderJournalCovers(scope) {
-  if (!ensurePdfJsWorker()) return;
-  const canvases = Array.from(scope.querySelectorAll(".journal-cover-canvas"));
-  for (const canvas of canvases) {
-    const pdfUrl = canvas.dataset.pdf;
-    const fallbackImg = canvas.parentElement?.querySelector(".journal-cover-fallback");
-    const loadingText = canvas.parentElement?.querySelector(".journal-cover-loading");
-    if (!pdfUrl) continue;
-    try {
-      const loadingTask = window.pdfjsLib.getDocument(pdfUrl);
-      const pdf = await loadingTask.promise;
-      const page = await pdf.getPage(1);
-      const targetWidth = 300;
-      const targetHeight = 400; // 3:4
-      const viewport = page.getViewport({ scale: 1 });
-      const context = canvas.getContext("2d");
-      if (!context) continue;
-      canvas.width = targetWidth;
-      canvas.height = targetHeight;
-      context.fillStyle = "#f3f8ff";
-      context.fillRect(0, 0, targetWidth, targetHeight);
-      const scale = Math.min(targetWidth / viewport.width, targetHeight / viewport.height);
-      const renderViewport = page.getViewport({ scale });
-      const dx = (targetWidth - renderViewport.width) / 2;
-      const dy = (targetHeight - renderViewport.height) / 2;
-      await page.render({
-        canvasContext: context,
-        viewport: renderViewport,
-        transform: [1, 0, 0, 1, dx, dy]
-      }).promise;
-      canvas.classList.add("ready");
-      if (fallbackImg) fallbackImg.style.display = "none";
-      if (loadingText) loadingText.style.display = "none";
-      await pdf.destroy();
-    } catch (e) {
-      if (fallbackImg) fallbackImg.style.display = "block";
-      if (loadingText) {
-        loadingText.textContent = "封面加载失败";
-      }
-    }
-  }
+  scope.querySelectorAll(".journal-preview-close").forEach((closeBtn) => {
+    closeBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const card = closeBtn.closest(".journal-card");
+      if (!card) return;
+      closeJournalPreview(card);
+    });
+  });
 }
 
 function renderAllPortfolios() {
@@ -200,26 +172,9 @@ function renderAllPortfolios() {
   boardGrid.innerHTML = portfolioData.board.map(createStandardCard).join("");
   logoGrid.innerHTML = portfolioData.logo.map(createStandardCard).join("");
   bindJournalClicks(journalGrid);
-  renderJournalCovers(journalGrid);
 }
 
 renderAllPortfolios();
-
-const pdfModal = document.getElementById("pdfModal");
-const pdfTitle = document.getElementById("pdfTitle");
-const pdfPageInfo = document.getElementById("pdfPageInfo");
-const pdfCanvas = document.getElementById("pdfCanvas");
-const pdfPrev = document.getElementById("pdfPrev");
-const pdfNext = document.getElementById("pdfNext");
-const pdfClose = document.getElementById("pdfClose");
-const modalBody = document.querySelector(".modal-body");
-
-let pdfDoc = null;
-let pdfPageNum = 1;
-let pdfRendering = false;
-let pdfPendingPage = null;
-let pdfScale = 1.2;
-let pdfUrlCurrent = "";
 
 function ensurePdfJsWorker() {
   if (!window.pdfjsLib) return false;
@@ -230,138 +185,65 @@ function ensurePdfJsWorker() {
   return true;
 }
 
-function setModalOpen(open) {
-  pdfModal.setAttribute("aria-hidden", open ? "false" : "true");
-  document.body.style.overflow = open ? "hidden" : "";
-}
+async function toggleJournalPreview(card, pdfUrl) {
+  const preview = card.querySelector(".journal-preview");
+  const pagesWrap = card.querySelector(".journal-preview-pages");
+  if (!preview || !pagesWrap) return;
 
-async function renderPdfPage(num) {
-  if (!pdfDoc) return;
-  pdfRendering = true;
-  const page = await pdfDoc.getPage(num);
-
-  const viewport = page.getViewport({ scale: pdfScale });
-  const context = pdfCanvas.getContext("2d");
-  pdfCanvas.height = viewport.height;
-  pdfCanvas.width = viewport.width;
-
-  const renderContext = { canvasContext: context, viewport };
-  const renderTask = page.render(renderContext);
-  await renderTask.promise;
-
-  pdfRendering = false;
-  if (pdfPendingPage !== null) {
-    const next = pdfPendingPage;
-    pdfPendingPage = null;
-    await renderPdfPage(next);
-  }
-}
-
-function queueRenderPdfPage(num) {
-  if (pdfRendering) {
-    pdfPendingPage = num;
+  const isOpen = card.classList.contains("expanded");
+  if (isOpen) {
+    closeJournalPreview(card);
     return;
   }
-  renderPdfPage(num);
-}
 
-function updatePdfControls() {
-  if (!pdfDoc) return;
-  pdfPageInfo.textContent = `第 ${pdfPageNum} / ${pdfDoc.numPages} 页`;
-  pdfPrev.disabled = pdfPageNum <= 1;
-  pdfNext.disabled = pdfPageNum >= pdfDoc.numPages;
-}
+  document.querySelectorAll(".journal-card.expanded").forEach((otherCard) => {
+    if (otherCard !== card) closeJournalPreview(otherCard);
+  });
 
-async function openPdfModal(url, title) {
+  card.classList.add("expanded");
+  preview.setAttribute("aria-hidden", "false");
+
+  if (pagesWrap.dataset.loaded === "true") return;
   if (!ensurePdfJsWorker()) {
-    alert("PDF 预览组件加载失败，请检查网络或稍后重试。");
+    pagesWrap.innerHTML = '<p class="journal-preview-status">预览组件加载失败</p>';
     return;
   }
-  const pdfUrl = normalizeAssetUrl(url);
-  pdfUrlCurrent = pdfUrl;
-  pdfTitle.textContent = title;
-  setModalOpen(true);
 
+  pagesWrap.innerHTML = '<p class="journal-preview-status">页面加载中...</p>';
   try {
     const loadingTask = window.pdfjsLib.getDocument(pdfUrl);
-    pdfDoc = await loadingTask.promise;
-    pdfPageNum = 1;
-    updatePdfControls();
-    await renderPdfPage(pdfPageNum);
-  } catch (e) {
-    pdfDoc = null;
-    pdfCanvas.width = 1;
-    pdfCanvas.height = 1;
-    pdfPageInfo.textContent = "加载失败";
+    const pdfDoc = await loadingTask.promise;
+    pagesWrap.innerHTML = "";
+
+    for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum += 1) {
+      const page = await pdfDoc.getPage(pageNum);
+      const viewport = page.getViewport({ scale: 1 });
+      const targetWidth = 840;
+      const scale = targetWidth / viewport.width;
+      const renderViewport = page.getViewport({ scale });
+      const canvas = document.createElement("canvas");
+      canvas.className = "journal-preview-page";
+      canvas.width = renderViewport.width;
+      canvas.height = renderViewport.height;
+      const context = canvas.getContext("2d");
+      if (!context) continue;
+      await page.render({ canvasContext: context, viewport: renderViewport }).promise;
+      pagesWrap.appendChild(canvas);
+    }
+
+    pagesWrap.dataset.loaded = "true";
+    await pdfDoc.destroy();
+  } catch (error) {
+    pagesWrap.innerHTML = '<p class="journal-preview-status">预览加载失败，请稍后重试。</p>';
   }
 }
 
-function closePdfModal() {
-  setModalOpen(false);
-  pdfDoc = null;
-  pdfPageNum = 1;
-  pdfPendingPage = null;
-  pdfRendering = false;
-  pdfUrlCurrent = "";
+function closeJournalPreview(card) {
+  const preview = card.querySelector(".journal-preview");
+  if (!preview) return;
+  card.classList.remove("expanded");
+  preview.setAttribute("aria-hidden", "true");
 }
-
-let touchStartX = 0;
-let touchEndX = 0;
-
-if (modalBody) {
-  modalBody.addEventListener(
-    "touchstart",
-    (e) => {
-      touchStartX = e.changedTouches[0].clientX;
-    },
-    { passive: true }
-  );
-
-  modalBody.addEventListener(
-    "touchend",
-    (e) => {
-      touchEndX = e.changedTouches[0].clientX;
-      const delta = touchEndX - touchStartX;
-      if (Math.abs(delta) < 40) return;
-      if (delta < 0) {
-        pdfNext.click();
-      } else {
-        pdfPrev.click();
-      }
-    },
-    { passive: true }
-  );
-}
-
-pdfPrev.addEventListener("click", () => {
-  if (!pdfDoc || pdfPageNum <= 1) return;
-  pdfPageNum -= 1;
-  updatePdfControls();
-  queueRenderPdfPage(pdfPageNum);
-});
-
-pdfNext.addEventListener("click", () => {
-  if (!pdfDoc || pdfPageNum >= pdfDoc.numPages) return;
-  pdfPageNum += 1;
-  updatePdfControls();
-  queueRenderPdfPage(pdfPageNum);
-});
-
-pdfClose.addEventListener("click", closePdfModal);
-
-pdfModal.addEventListener("click", (e) => {
-  const target = e.target;
-  if (target && target.dataset && target.dataset.close === "true") {
-    closePdfModal();
-  }
-});
-
-window.addEventListener("keydown", (e) => {
-  if (pdfModal.getAttribute("aria-hidden") !== "false") return;
-  if (e.key === "Escape") closePdfModal();
-  if (e.key === "ArrowLeft") pdfPrev.click();
-  if (e.key === "ArrowRight") pdfNext.click();
-});
 
 const backToTop = document.getElementById("backToTop");
 

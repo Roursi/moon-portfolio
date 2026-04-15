@@ -409,49 +409,11 @@ a {
   box-shadow: 0 8px 20px rgba(15, 95, 63, 0.09);
 }
 
-.journal-cover img {
+.journal-cover-image {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   display: block;
-}
-
-.journal-cover-canvas {
-  width: 100%;
-  height: 100%;
-  display: block;
-  background: rgba(239, 246, 255, 0.9);
-  opacity: 0;
-  transition: opacity 0.25s ease;
-}
-
-.journal-cover-canvas.ready {
-  opacity: 1;
-}
-
-.journal-cover-fallback {
-  position: absolute;
-  inset: 0;
-}
-
-.journal-cover-loading {
-  position: absolute;
-  inset: auto 0 12px 0;
-  text-align: center;
-  font-size: 0.82rem;
-  color: rgba(48, 85, 160, 0.9);
-  letter-spacing: 0.2px;
-  z-index: 2;
-  pointer-events: none;
-}
-
-.journal-cover-frame {
-  width: 100%;
-  height: 100%;
-  display: block;
-  border: 0;
-  background: #eef4ff;
-  pointer-events: none;
 }
 
 .journal-meta {
@@ -466,6 +428,62 @@ a {
 .journal-hint {
   font-size: 0.82rem;
   color: rgba(13, 106, 73, 0.75);
+}
+
+.journal-preview {
+  display: none;
+  margin-top: 0.7rem;
+  border-radius: 12px;
+  border: 1px solid rgba(33, 86, 188, 0.18);
+  background: rgba(246, 250, 255, 0.92);
+  padding: 0.75rem;
+}
+
+.journal-card.expanded .journal-preview {
+  display: block;
+}
+
+.journal-preview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  margin-bottom: 0.6rem;
+  color: #2453a8;
+}
+
+.journal-preview-close {
+  border: 1px solid rgba(36, 83, 168, 0.25);
+  background: #edf4ff;
+  color: #2453a8;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  padding: 0.25rem 0.75rem;
+  cursor: pointer;
+}
+
+.journal-preview-pages {
+  display: grid;
+  gap: 0.7rem;
+  max-height: 62vh;
+  overflow-y: auto;
+  padding-right: 0.2rem;
+}
+
+.journal-preview-page {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(27, 66, 139, 0.12);
+}
+
+.journal-preview-status {
+  margin: 0.4rem 0;
+  text-align: center;
+  color: #4c6190;
+  font-size: 0.9rem;
 }
 
 .modal {
