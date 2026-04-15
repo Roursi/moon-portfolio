@@ -118,7 +118,9 @@ function createJournalCard(item) {
     <article class="journal-card">
       <button class="journal-btn" type="button" data-pdf="${pdfUrl}" data-title="${item.title}">
         <div class="journal-cover">
-          <img src="${coverUrl}" alt="${item.title} 封面" />
+          <span class="journal-cover-loading">封面加载中...</span>
+          <canvas class="journal-cover-canvas" data-pdf="${pdfUrl}" aria-label="${item.title} PDF 封面"></canvas>
+          <img class="journal-cover-fallback" src="${coverUrl}" alt="${item.title} 封面" />
         </div>
         <div class="journal-meta">
           <span>${item.title}</span>
@@ -150,12 +152,44 @@ function bindJournalClicks(scope) {
   });
 }
 
+async function renderJournalCovers(scope) {
+  if (!ensurePdfJsWorker()) return;
+  const canvases = Array.from(scope.querySelectorAll(".journal-cover-canvas"));
+  for (const canvas of canvases) {
+    const pdfUrl = canvas.dataset.pdf;
+    const fallbackImg = canvas.parentElement?.querySelector(".journal-cover-fallback");
+    const loadingText = canvas.parentElement?.querySelector(".journal-cover-loading");
+    if (!pdfUrl) continue;
+    try {
+      const loadingTask = window.pdfjsLib.getDocument(pdfUrl);
+      const pdf = await loadingTask.promise;
+      const page = await pdf.getPage(1);
+      const viewport = page.getViewport({ scale: 0.38 });
+      const context = canvas.getContext("2d");
+      if (!context) continue;
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      await page.render({ canvasContext: context, viewport }).promise;
+      canvas.classList.add("ready");
+      if (fallbackImg) fallbackImg.style.display = "none";
+      if (loadingText) loadingText.style.display = "none";
+      await pdf.destroy();
+    } catch (e) {
+      if (fallbackImg) fallbackImg.style.display = "block";
+      if (loadingText) {
+        loadingText.textContent = "封面加载失败";
+      }
+    }
+  }
+}
+
 function renderAllPortfolios() {
   journalGrid.innerHTML = portfolioData.journal.map(createJournalCard).join("");
   posterGrid.innerHTML = portfolioData.poster.map(createStandardCard).join("");
   boardGrid.innerHTML = portfolioData.board.map(createStandardCard).join("");
   logoGrid.innerHTML = portfolioData.logo.map(createStandardCard).join("");
   bindJournalClicks(journalGrid);
+  renderJournalCovers(journalGrid);
 }
 
 renderAllPortfolios();
@@ -167,6 +201,7 @@ const pdfCanvas = document.getElementById("pdfCanvas");
 const pdfPrev = document.getElementById("pdfPrev");
 const pdfNext = document.getElementById("pdfNext");
 const pdfClose = document.getElementById("pdfClose");
+const modalBody = document.querySelector(".modal-body");
 
 let pdfDoc = null;
 let pdfPageNum = 1;
@@ -257,6 +292,34 @@ function closePdfModal() {
   pdfPendingPage = null;
   pdfRendering = false;
   pdfUrlCurrent = "";
+}
+
+let touchStartX = 0;
+let touchEndX = 0;
+
+if (modalBody) {
+  modalBody.addEventListener(
+    "touchstart",
+    (e) => {
+      touchStartX = e.changedTouches[0].clientX;
+    },
+    { passive: true }
+  );
+
+  modalBody.addEventListener(
+    "touchend",
+    (e) => {
+      touchEndX = e.changedTouches[0].clientX;
+      const delta = touchEndX - touchStartX;
+      if (Math.abs(delta) < 40) return;
+      if (delta < 0) {
+        pdfNext.click();
+      } else {
+        pdfPrev.click();
+      }
+    },
+    { passive: true }
+  );
 }
 
 pdfPrev.addEventListener("click", () => {
