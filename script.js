@@ -113,20 +113,16 @@ function normalizeAssetUrl(url) {
 
 function createJournalCard(item) {
   const pdfUrl = normalizeAssetUrl(item.pdf);
+  const coverUrl = normalizeAssetUrl(item.cover);
   return `
     <article class="journal-card">
       <button class="journal-btn" type="button" data-pdf="${pdfUrl}" data-title="${item.title}">
         <div class="journal-cover">
-          <iframe
-            class="journal-cover-frame"
-            src="${pdfUrl}#page=1&view=FitH&toolbar=0&navpanes=0&scrollbar=0"
-            title="${item.title} 预览"
-            loading="lazy"
-          ></iframe>
+          <img src="${coverUrl}" alt="${item.title} 封面" />
         </div>
         <div class="journal-meta">
           <span>${item.title}</span>
-          <span class="journal-hint">点击查看 PDF</span>
+          <span class="journal-hint">点击在线预览</span>
         </div>
       </button>
     </article>
@@ -147,8 +143,9 @@ function bindJournalClicks(scope) {
   scope.querySelectorAll(".journal-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       const pdf = btn.dataset.pdf;
+      const title = btn.dataset.title || "期刊预览";
       if (!pdf) return;
-      window.open(pdf, "_blank", "noopener,noreferrer");
+      openPdfModal(pdf, title);
     });
   });
 }
@@ -170,7 +167,6 @@ const pdfCanvas = document.getElementById("pdfCanvas");
 const pdfPrev = document.getElementById("pdfPrev");
 const pdfNext = document.getElementById("pdfNext");
 const pdfClose = document.getElementById("pdfClose");
-const pdfOpenNew = document.getElementById("pdfOpenNew");
 
 let pdfDoc = null;
 let pdfPageNum = 1;
@@ -237,7 +233,6 @@ async function openPdfModal(url, title) {
   }
   const pdfUrl = normalizeAssetUrl(url);
   pdfUrlCurrent = pdfUrl;
-  pdfOpenNew.href = pdfUrl;
   pdfTitle.textContent = title;
   setModalOpen(true);
 
