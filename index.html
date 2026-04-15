@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>个人介绍 | 蓝色简约风格</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="top-nav">
+      <div class="container nav-inner">
+        <a class="brand" href="#home">郭紫岳</a>
+        <nav>
+          <ul class="nav-links">
+            <li><a href="#home">首页</a></li>
+            <li><a href="#about">关于我</a></li>
+            <li><a href="#portfolio">作品集</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section id="home" class="section hero fade-in-section">
+        <div class="container card hero-card">
+          <div class="hero-text">
+            <p class="eyebrow">HELLO, I'M A CREATIVE THINKER</p>
+            <h1>把灵感做成可见的设计</h1>
+            <p>
+              我是一名热爱视觉设计与内容表达的创作者，正在通过 AI
+              辅助开发把想法落地成网页与作品。专注于版式美学、品牌表达与数字体验。
+            </p>
+            <div class="tags">
+              <span>版式设计</span>
+              <span>品牌视觉</span>
+              <span>网页表达</span>
+            </div>
+          </div>
+          <div class="hero-avatar-wrap">
+            <img
+              class="hero-avatar"
+              src="./assets/微信图片_20260415135838_68_357.png"
+              alt="个人头像"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section id="about" class="section fade-in-section">
+        <div class="container card single-col">
+          <div class="about-layout">
+            <div>
+              <h2>关于我</h2>
+              <p>
+                我喜欢用细节表达情绪，擅长把复杂内容梳理成清晰、优雅的视觉语言。<br />
+                这个界面是我借助 AI 辅助完成的第一个练手项目，目标是简洁、好看、可持续迭代。
+              </p>
+              <div class="tags">
+                <span>平面设计</span>
+                <span>内容策划</span>
+                <span>摄影审美</span>
+                <span>UI 灵感</span>
+              </div>
+            </div>
+            <div class="about-art" aria-hidden="true">
+              <div class="about-thumbnail">
+                <iframe class="about-thumbnail-frame" src="./index.html#home" title="网页缩略图预览"></iframe>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="profile" class="section fade-in-section">
+        <div class="container card profile-grid">
+          <article>
+            <h2>个人档案</h2>
+            <p>
+              我重视视觉节奏与信息层级，偏好从“内容本身”出发进行创意表达。希望在品牌设计与数字内容领域持续深耕，让作品既有情绪，也有功能性。
+            </p>
+            <p>
+              手机号：13146490713<br />
+              邮箱：1489393762@qq.com
+            </p>
+          </article>
+          <aside>
+            <h3>技能与兴趣</h3>
+            <ul class="icon-tags">
+              <li><span>✦</span> InDesign / 排版</li>
+              <li><span>✦</span> Photoshop / 修图</li>
+              <li><span>✦</span> Illustrator / 图形</li>
+              <li><span>✦</span> 摄影与视觉叙事</li>
+              <li><span>✦</span> AI 辅助创作</li>
+              <li><span>✦</span> Web 基础搭建</li>
+            </ul>
+          </aside>
+        </div>
+      </section>
+
+      <section id="portfolio" class="section fade-in-section">
+        <div class="container card">
+          <div class="section-head">
+            <h2>作品展示区</h2>
+            <p>
+              作品按类别分区展示，不折叠分页。期刊可点击直接打开 PDF，方便完整查看。
+            </p>
+          </div>
+
+          <div class="portfolio-showcase">
+            <section class="showcase-block">
+              <h3>期刊设计</h3>
+              <div id="journalGrid" class="portfolio-grid journal-grid" aria-live="polite"></div>
+            </section>
+
+            <section class="showcase-block">
+              <h3>海报封面</h3>
+              <div id="posterGrid" class="portfolio-grid two-col-grid" aria-live="polite"></div>
+            </section>
+
+            <section class="showcase-block">
+              <h3>展板</h3>
+              <div id="boardGrid" class="portfolio-grid two-col-grid" aria-live="polite"></div>
+            </section>
+
+            <section class="showcase-block">
+              <h3>Logo</h3>
+              <div id="logoGrid" class="portfolio-grid two-col-grid logo-grid" aria-live="polite"></div>
+            </section>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div id="pdfModal" class="modal" aria-hidden="true" role="dialog" aria-label="期刊 PDF 预览">
+      <div class="modal-backdrop" data-close="true"></div>
+      <div class="modal-panel card">
+        <div class="modal-head">
+          <div>
+            <div id="pdfTitle" class="modal-title">期刊预览</div>
+            <div id="pdfPageInfo" class="modal-subtitle">第 1 页</div>
+          </div>
+          <button id="pdfClose" class="modal-close" aria-label="关闭">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="pdf-stage">
+            <canvas id="pdfCanvas"></canvas>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button id="pdfPrev" class="btn-soft" aria-label="上一页">上一页</button>
+          <button id="pdfNext" class="btn-primary" aria-label="下一页">下一页</button>
+          <a id="pdfOpenNew" class="btn-link" href="#" target="_blank" rel="noreferrer">新窗口打开</a>
+        </div>
+      </div>
+    </div>
+
+    <button id="backToTop" class="back-to-top" aria-label="返回顶部">↑</button>
+
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.js"></script>
+    <script src="./script.js"></script>
+  </body>
+</html>
