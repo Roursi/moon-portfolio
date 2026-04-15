@@ -124,7 +124,7 @@ function createJournalCard(item) {
         </div>
         <div class="journal-meta">
           <span>${item.title}</span>
-          <span class="journal-hint">点击在线预览</span>
+          <span class="journal-hint">新窗口打开</span>
         </div>
       </button>
     </article>
@@ -145,9 +145,8 @@ function bindJournalClicks(scope) {
   scope.querySelectorAll(".journal-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       const pdf = btn.dataset.pdf;
-      const title = btn.dataset.title || "期刊预览";
       if (!pdf) return;
-      openPdfModal(pdf, title);
+      window.open(pdf, "_blank", "noopener,noreferrer");
     });
   });
 }
@@ -164,12 +163,24 @@ async function renderJournalCovers(scope) {
       const loadingTask = window.pdfjsLib.getDocument(pdfUrl);
       const pdf = await loadingTask.promise;
       const page = await pdf.getPage(1);
-      const viewport = page.getViewport({ scale: 0.38 });
+      const targetWidth = 300;
+      const targetHeight = 400; // 3:4
+      const viewport = page.getViewport({ scale: 1 });
       const context = canvas.getContext("2d");
       if (!context) continue;
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
-      await page.render({ canvasContext: context, viewport }).promise;
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+      context.fillStyle = "#f3f8ff";
+      context.fillRect(0, 0, targetWidth, targetHeight);
+      const scale = Math.min(targetWidth / viewport.width, targetHeight / viewport.height);
+      const renderViewport = page.getViewport({ scale });
+      const dx = (targetWidth - renderViewport.width) / 2;
+      const dy = (targetHeight - renderViewport.height) / 2;
+      await page.render({
+        canvasContext: context,
+        viewport: renderViewport,
+        transform: [1, 0, 0, 1, dx, dy]
+      }).promise;
       canvas.classList.add("ready");
       if (fallbackImg) fallbackImg.style.display = "none";
       if (loadingText) loadingText.style.display = "none";
