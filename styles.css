@@ -410,10 +410,24 @@ a {
 }
 
 .journal-cover-image {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+.journal-cover-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.journal-cover-canvas.ready {
+  opacity: 1;
 }
 
 .journal-meta {

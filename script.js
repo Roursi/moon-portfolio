@@ -118,7 +118,8 @@ function createJournalCard(item) {
     <article class="journal-card">
       <button class="journal-btn" type="button" data-pdf="${pdfUrl}" data-title="${item.title}">
         <div class="journal-cover">
-          <img class="journal-cover-image" src="${coverUrl}" alt="${item.title} 封面" />
+          <canvas class="journal-cover-canvas" data-pdf="${pdfUrl}" aria-label="${item.title} 第一页封面"></canvas>
+          <img class="journal-cover-image cover-fallback" src="${coverUrl}" alt="${item.title} 封面" />
         </div>
         <div class="journal-meta">
           <span>${item.title}</span>
@@ -172,6 +173,7 @@ function renderAllPortfolios() {
   boardGrid.innerHTML = portfolioData.board.map(createStandardCard).join("");
   logoGrid.innerHTML = portfolioData.logo.map(createStandardCard).join("");
   bindJournalClicks(journalGrid);
+  renderJournalCoverFirstPages(journalGrid);
 }
 
 renderAllPortfolios();
@@ -179,10 +181,47 @@ renderAllPortfolios();
 function ensurePdfJsWorker() {
   if (!window.pdfjsLib) return false;
   if (!window.pdfjsLib.GlobalWorkerOptions.workerSrc) {
-    window.pdfjsLib.GlobalWorkerOptions.workerSrc =
-      "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.js";
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = "./vendor/pdf.worker.min.js";
   }
   return true;
+}
+
+async function renderJournalCoverFirstPages(scope) {
+  if (!ensurePdfJsWorker()) return;
+  const coverCanvases = Array.from(scope.querySelectorAll(".journal-cover-canvas"));
+  for (const canvas of coverCanvases) {
+    const pdfUrl = canvas.dataset.pdf;
+    const fallback = canvas.parentElement?.querySelector(".cover-fallback");
+    if (!pdfUrl) continue;
+    try {
+      const loadingTask = window.pdfjsLib.getDocument(pdfUrl);
+      const pdfDoc = await loadingTask.promise;
+      const page = await pdfDoc.getPage(1);
+      const viewport = page.getViewport({ scale: 1 });
+      const targetWidth = 360;
+      const targetHeight = 480; // 3:4
+      const scale = Math.max(targetWidth / viewport.width, targetHeight / viewport.height);
+      const renderViewport = page.getViewport({ scale });
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+      const context = canvas.getContext("2d");
+      if (!context) continue;
+      context.fillStyle = "#f5f8ff";
+      context.fillRect(0, 0, targetWidth, targetHeight);
+      const dx = (targetWidth - renderViewport.width) / 2;
+      const dy = (targetHeight - renderViewport.height) / 2;
+      await page.render({
+        canvasContext: context,
+        viewport: renderViewport,
+        transform: [1, 0, 0, 1, dx, dy]
+      }).promise;
+      canvas.classList.add("ready");
+      if (fallback) fallback.style.display = "none";
+      await pdfDoc.destroy();
+    } catch (error) {
+      if (fallback) fallback.style.display = "block";
+    }
+  }
 }
 
 async function toggleJournalPreview(card, pdfUrl) {
