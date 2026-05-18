@@ -174,10 +174,32 @@ function renderAllPortfolios() {
   boardGrid.innerHTML = portfolioData.board.map(createStandardCard).join("");
   logoGrid.innerHTML = portfolioData.logo.map(createStandardCard).join("");
   bindJournalClicks(journalGrid);
-  renderJournalCoverFirstPages(journalGrid);
+  waitForPdfJs().then(() => renderJournalCoverFirstPages(journalGrid));
 }
 
 renderAllPortfolios();
+
+function waitForPdfJs() {
+  return new Promise((resolve) => {
+    if (window.pdfjsLib) {
+      ensurePdfJsWorker();
+      resolve();
+      return;
+    }
+    let attempts = 0;
+    const timer = setInterval(() => {
+      attempts++;
+      if (window.pdfjsLib) {
+        clearInterval(timer);
+        ensurePdfJsWorker();
+        resolve();
+      } else if (attempts > 100) {
+        clearInterval(timer);
+        resolve();
+      }
+    }, 50);
+  });
+}
 
 function ensurePdfJsWorker() {
   if (!window.pdfjsLib) return false;
