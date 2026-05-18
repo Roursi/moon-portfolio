@@ -3,27 +3,27 @@ const portfolioData = {
   journal: [
     {
       title: "《求真》第一期",
-      pdf: "./assets/journals/《求真》第一期.pdf",
+      pdf: "./assets/journals/qiuzhen-1.pdf",
       cover: "./assets/journals/cover-qiuzhen-1.png"
     },
     {
       title: "《求真》第二期",
-      pdf: "./assets/journals/《求真》第二期.pdf",
+      pdf: "./assets/journals/qiuzhen-2.pdf",
       cover: "./assets/journals/cover-qiuzhen-2.png"
     },
     {
       title: "《求真》第三期",
-      pdf: "./assets/journals/《求真》第三期.pdf",
+      pdf: "./assets/journals/qiuzhen-3.pdf",
       cover: "./assets/journals/cover-qiuzhen-3.png"
     },
     {
       title: "《求真》第四期",
-      pdf: "./assets/journals/《求真》第四期.pdf",
+      pdf: "./assets/journals/qiuzhen-4.pdf",
       cover: "./assets/journals/cover-qiuzhen-4.png"
     },
     {
       title: "班刊集萃",
-      pdf: "./assets/journals/班刊集萃.pdf",
+      pdf: "./assets/journals/banji-jicui.pdf",
       cover: "./assets/journals/cover-banji-jicui.png"
     }
   ],
